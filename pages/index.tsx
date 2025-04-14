@@ -145,4 +145,4 @@ const styles = {
     fontSize: '0.9rem',
     textShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
   },
-};
+}; 
