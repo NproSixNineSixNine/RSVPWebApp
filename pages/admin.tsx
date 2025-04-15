@@ -274,14 +274,12 @@ const AdminPage = () => {
           </div>
           <div style={styles.eventsList}>
             {getFilteredEvents().map((event) => (
-              <div key={event.id} style={styles.eventItem}>
-                <h3 style={styles.eventTitle}>{event.title}</h3>
-                <p style={styles.eventDetail}>
-                  <strong>Date & Time:</strong> {new Date(event.date_time).toLocaleString()}
-                </p>
-                <p style={styles.eventDetail}><strong>Location:</strong> {event.location}</p>
-                <p style={styles.eventDetail}><strong>Description:</strong> {event.description}</p>
-                <p style={styles.eventDetail}><strong>+1 Allowed:</strong> {event.allow_plus_one ? "Yes" : "No"}</p>
+              <div key={event.id} style={styles.eventCard}>
+                <div style={styles.eventHeader}>
+                  <h3 style={styles.eventTitle}>{event.title}</h3>
+                  <p style={styles.eventDate}>{new Date(event.date_time).toLocaleString()}</p>
+                </div>
+                <p style={styles.eventDescription}>{event.description}</p>
                 <h4 style={styles.rsvpTitle}>
                   RSVPs ({rsvps.filter(rsvp => rsvp.event_id === event.id).length})
                 </h4>
@@ -289,11 +287,23 @@ const AdminPage = () => {
                   {rsvps
                     .filter((rsvp) => rsvp.event_id === event.id)
                     .map((rsvp) => (
-                      <div key={rsvp.id} style={styles.rsvpItem}>
-                        <p style={styles.rsvpDetail}><strong>{rsvp.name}</strong> ({rsvp.email})</p>
-                        <p style={styles.rsvpDetail}>Response: {rsvp.response}</p>
-                        <p style={styles.rsvpDetail}>+1: {rsvp.will_bring_plus_one ? 'Yes' : 'No'}</p>
-                        <p style={styles.rsvpDetail}>Dietary: {rsvp.dietary_preferences}</p>
+                      <div key={rsvp.id} style={styles.rsvpCard}>
+                        <div style={styles.rsvpHeader}>
+                          <p style={styles.rsvpName}>{rsvp.name}</p>
+                          <p style={styles.rsvpEmail}>{rsvp.email}</p>
+                        </div>
+                        <p style={styles.rsvpDetails}>
+                          <strong>Response:</strong> {rsvp.response}
+                        </p>
+                        <p style={styles.rsvpDetails}>
+                          <strong>+1:</strong> {rsvp.will_bring_plus_one ? 'Yes' : 'No'}
+                        </p>
+                        <p style={styles.rsvpDetails}>
+                          <strong>Dietary:</strong> {rsvp.dietary_preferences}
+                        </p>
+                        <p style={styles.rsvpStatus} className={rsvp.response === 'yes' ? styles.statusYes : rsvp.response === 'no' ? styles.statusNo : styles.statusMaybe}>
+                          {rsvp.response.charAt(0).toUpperCase() + rsvp.response.slice(1)}
+                        </p>
                       </div>
                     ))}
                 </div>
@@ -342,53 +352,111 @@ const styles = {
     zIndex: 2,
     width: '100%',
     maxWidth: '1200px',
-    padding: '2rem',
+    padding: '1rem',
     margin: '0 auto',
+    '@media (min-width: 640px)': {
+      padding: '2rem',
+    },
   },
   header: {
     textAlign: 'center' as const,
-    marginBottom: '2rem',
+    marginBottom: '1.5rem',
+    '@media (min-width: 640px)': {
+      marginBottom: '2rem',
+    },
   },
   title: {
     color: '#ffffff',
-    fontSize: '2.5rem',
+    fontSize: '1.75rem',
     fontWeight: '600',
     marginBottom: '0.5rem',
     textShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+    '@media (min-width: 640px)': {
+      fontSize: '2.5rem',
+    },
   },
   welcome: {
     color: 'rgba(255, 255, 255, 0.8)',
-    fontSize: '1.1rem',
+    fontSize: '1rem',
+    '@media (min-width: 640px)': {
+      fontSize: '1.1rem',
+    },
   },
   card: {
     background: 'rgba(255, 255, 255, 0.1)',
-    padding: '2rem',
+    padding: '1rem',
     borderRadius: '16px',
     boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
     backdropFilter: 'blur(10px)',
     border: '1px solid rgba(255, 255, 255, 0.3)',
-    marginBottom: '2rem',
+    marginBottom: '1.5rem',
+    '@media (min-width: 640px)': {
+      padding: '2rem',
+      marginBottom: '2rem',
+    },
   },
   sectionTitle: {
     color: '#ffffff',
-    fontSize: '1.75rem',
-    marginBottom: '1.5rem',
+    fontSize: '1.25rem',
+    marginBottom: '1rem',
     fontWeight: '600',
     textShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+    '@media (min-width: 640px)': {
+      fontSize: '1.75rem',
+      marginBottom: '1.5rem',
+    },
   },
   form: {
     display: 'flex',
     flexDirection: 'column' as const,
-    gap: '1rem',
+    gap: '0.75rem',
+    '@media (min-width: 640px)': {
+      gap: '1rem',
+    },
   },
   input: {
     padding: '0.75rem 1rem',
     borderRadius: '8px',
     border: '1px solid rgba(255, 255, 255, 0.3)',
-    fontSize: '16px',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    color: '#ffffff',
+    fontSize: '14px',
+    backgroundColor: '#ffffff',
+    color: '#2c1810',
     backdropFilter: 'blur(5px)',
+    width: '100%',
+    '@media (min-width: 640px)': {
+      fontSize: '16px',
+    },
+    '::placeholder': {
+      color: 'rgba(44, 24, 16, 0.5)',
+    },
+    ':focus': {
+      outline: 'none',
+      borderColor: '#667eea',
+      boxShadow: '0 0 0 2px rgba(102, 126, 234, 0.2)',
+    },
+  },
+  textarea: {
+    padding: '0.75rem 1rem',
+    borderRadius: '8px',
+    border: '1px solid rgba(255, 255, 255, 0.3)',
+    fontSize: '14px',
+    backgroundColor: '#ffffff',
+    color: '#2c1810',
+    minHeight: '100px',
+    resize: 'vertical' as const,
+    backdropFilter: 'blur(5px)',
+    width: '100%',
+    '@media (min-width: 640px)': {
+      fontSize: '16px',
+    },
+    '::placeholder': {
+      color: 'rgba(44, 24, 16, 0.5)',
+    },
+    ':focus': {
+      outline: 'none',
+      borderColor: '#667eea',
+      boxShadow: '0 0 0 2px rgba(102, 126, 234, 0.2)',
+    },
   },
   checkboxLabel: {
     display: 'flex',
@@ -407,64 +475,141 @@ const styles = {
     background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
     color: '#ffffff',
     border: 'none',
-    fontSize: '16px',
+    fontSize: '14px',
     cursor: 'pointer',
     transition: 'all 0.3s ease',
     fontWeight: '600',
     boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+    width: '100%',
+    '@media (min-width: 640px)': {
+      fontSize: '16px',
+      width: 'auto',
+    },
   },
   eventsList: {
     display: 'flex',
     flexDirection: 'column' as const,
-    gap: '2rem',
+    gap: '1rem',
     width: '100%',
+    '@media (min-width: 640px)': {
+      gap: '2rem',
+    },
   },
-  eventItem: {
-    background: 'rgba(255, 255, 255, 0.1)',
-    padding: '2rem',
-    borderRadius: '16px',
+  eventCard: {
+    background: 'rgba(255, 255, 255, 0.15)',
+    backdropFilter: 'blur(10px)',
+    WebkitBackdropFilter: 'blur(10px)',
+    padding: '1rem',
+    borderRadius: '12px',
+    boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)',
     border: '1px solid rgba(255, 255, 255, 0.2)',
-    display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
-    gap: '2rem',
-    minHeight: '300px',
-    width: '100%',
-    marginBottom: '2rem',
+    marginBottom: '1rem',
+    transition: 'all 0.3s ease',
+    '@media (min-width: 640px)': {
+      padding: '1.5rem',
+      marginBottom: '1.5rem',
+    },
+    ':hover': {
+      transform: 'translateY(-2px)',
+      boxShadow: '0 6px 20px rgba(0, 0, 0, 0.15)',
+      background: 'rgba(255, 255, 255, 0.2)',
+    },
+  },
+  eventHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '1rem',
   },
   eventTitle: {
-    color: '#ffffff',
-    fontSize: '1.75rem',
-    marginBottom: '1rem',
-    fontWeight: '600',
-    gridColumn: '1 / -1',
-  },
-  eventDetail: {
-    color: 'rgba(255, 255, 255, 0.9)',
-    marginBottom: '0.5rem',
     fontSize: '1.1rem',
+    fontWeight: '600',
+    color: '#ffffff',
+    margin: 0,
+    '@media (min-width: 640px)': {
+      fontSize: '1.25rem',
+    },
+  },
+  eventDate: {
+    fontSize: '0.8rem',
+    color: 'rgba(255, 255, 255, 0.9)',
+    '@media (min-width: 640px)': {
+      fontSize: '0.9rem',
+    },
+  },
+  eventDescription: {
+    fontSize: '0.95rem',
+    color: 'rgba(255, 255, 255, 0.9)',
+    marginBottom: '1rem',
+    lineHeight: '1.5',
   },
   rsvpTitle: {
     color: '#ffffff',
-    fontSize: '1.3rem',
+    fontSize: '1.1rem',
     margin: '1rem 0',
-    gridColumn: '1 / -1',
+    fontWeight: '600',
   },
   rsvpList: {
-    display: 'grid',
-    gap: '1rem',
-    maxHeight: '300px',
+    marginTop: '1rem',
+    maxHeight: '200px',
     overflowY: 'auto' as const,
-    paddingRight: '1rem',
+    paddingRight: '0.5rem',
+    '@media (min-width: 640px)': {
+      maxHeight: '300px',
+    },
   },
-  rsvpItem: {
-    background: 'rgba(255, 255, 255, 0.05)',
-    padding: '1rem',
+  rsvpCard: {
+    background: 'rgba(255, 255, 255, 0.1)',
+    padding: '0.75rem',
     borderRadius: '8px',
-    borderLeft: '4px solid #667eea',
+    marginBottom: '0.75rem',
+    border: '1px solid rgba(255, 255, 255, 0.2)',
+    transition: 'all 0.2s ease',
+    ':hover': {
+      background: 'rgba(255, 255, 255, 0.15)',
+      transform: 'translateX(2px)',
+    },
   },
-  rsvpDetail: {
-    color: 'rgba(255, 255, 255, 0.8)',
-    marginBottom: '0.25rem',
+  rsvpHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '0.5rem',
+  },
+  rsvpName: {
+    fontSize: '0.95rem',
+    fontWeight: '500',
+    color: '#ffffff',
+    margin: 0,
+  },
+  rsvpEmail: {
+    fontSize: '0.85rem',
+    color: 'rgba(255, 255, 255, 0.9)',
+  },
+  rsvpDetails: {
+    fontSize: '0.85rem',
+    color: 'rgba(255, 255, 255, 0.9)',
+    marginTop: '0.5rem',
+  },
+  rsvpStatus: {
+    display: 'inline-block',
+    padding: '0.25rem 0.5rem',
+    borderRadius: '4px',
+    fontSize: '0.75rem',
+    fontWeight: '500',
+    textTransform: 'uppercase' as const,
+  },
+  statusYes: {
+    background: 'rgba(72, 187, 120, 0.2)',
+    color: '#ffffff',
+  },
+  statusNo: {
+    background: 'rgba(245, 101, 101, 0.2)',
+    color: '#ffffff',
+  },
+  statusMaybe: {
+    background: 'rgba(246, 173, 85, 0.2)',
+    color: '#ffffff',
   },
   loading: {
     display: 'flex',
