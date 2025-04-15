@@ -22,9 +22,6 @@ export default function ThankYouPage() {
             <p>If anything changes, feel free to RSVP again or contact us directly.</p>
           </>
         )}
-        <Link href="/">
-          <button>Back to Home</button>
-        </Link>
       </div>
 
       <style jsx>{`
@@ -54,22 +51,6 @@ export default function ThankYouPage() {
           font-size: 1.1rem;
           color: #555;
           margin: 10px 0;
-        }
-
-        button {
-          margin-top: 25px;
-          padding: 12px 24px;
-          background: #0070f3;
-          color: white;
-          border: none;
-          border-radius: 6px;
-          cursor: pointer;
-          font-size: 1rem;
-          transition: background 0.2s ease-in-out;
-        }
-
-        button:hover {
-          background: #005bb5;
         }
       `}</style>
     </div>
