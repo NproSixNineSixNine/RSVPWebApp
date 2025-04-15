@@ -301,7 +301,12 @@ const AdminPage = () => {
                         <p style={styles.rsvpDetails}>
                           <strong>Dietary:</strong> {rsvp.dietary_preferences}
                         </p>
-                        <p style={styles.rsvpStatus} className={rsvp.response === 'yes' ? styles.statusYes : rsvp.response === 'no' ? styles.statusNo : styles.statusMaybe}>
+                        <p style={{
+                          ...styles.rsvpStatus,
+                          ...(rsvp.response === 'yes' ? styles.statusYes : 
+                               rsvp.response === 'no' ? styles.statusNo : 
+                               styles.statusMaybe)
+                        }}>
                           {rsvp.response.charAt(0).toUpperCase() + rsvp.response.slice(1)}
                         </p>
                       </div>
@@ -592,13 +597,15 @@ const styles = {
     marginTop: '0.5rem',
   },
   rsvpStatus: {
-    display: 'inline-block',
-    padding: '0.25rem 0.5rem',
+    margin: '0',
+    padding: '4px 8px',
     borderRadius: '4px',
-    fontSize: '0.75rem',
+    fontSize: '0.9rem',
     fontWeight: '500',
-    textTransform: 'uppercase' as const,
-  },
+    display: 'inline-block',
+    background: 'rgba(255, 255, 255, 0.1)',
+    color: '#fff',
+  } as React.CSSProperties,
   statusYes: {
     background: 'rgba(72, 187, 120, 0.2)',
     color: '#ffffff',
