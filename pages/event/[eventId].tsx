@@ -98,7 +98,7 @@ export default function EventPage() {
     fetchEvent();
   }, [eventId, router.isReady]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const target = e.target as HTMLInputElement;
     const { name, value, type } = target;
 
