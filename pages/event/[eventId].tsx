@@ -1,7 +1,20 @@
+/**
+ * Event Page Component
+ * 
+ * This page displays event details and handles RSVP submissions.
+ * Features:
+ * - Event information display
+ * - RSVP form with validation
+ * - Plus one option handling
+ * - Loading and error states
+ * - Responsive design
+ */
+
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { supabase } from "../../lib/supabaseClient";
 
+// Type definitions for better type safety
 interface Event {
   id: string;
   title: string;
@@ -20,75 +33,69 @@ interface RSVPForm {
 }
 
 export default function EventPage() {
+  // Router instance for navigation and query parameters
   const router = useRouter();
   const { eventId } = router.query;
 
+  // State management
   const [event, setEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [formData, setFormData] = useState<RSVPForm>({
+  const [newRsvp, setNewRsvp] = useState<RSVPForm>({
     name: "",
     email: "",
-    response: "yes",
+    response: "",
     plus_one: false,
     dietary_preferences: "",
   });
 
+  /**
+   * Fetches event details from the database
+   * Handles loading states and error cases
+   */
   useEffect(() => {
     if (!router.isReady || !eventId) return;
 
-    console.log(`🚨 Event ID from URL: ${eventId}`);
-    console.log(`📝 Event ID type: ${typeof eventId}`);
-    console.log(`🔍 Checking if eventId is valid: ${eventId}`);
-
     const fetchEvent = async () => {
       try {
-        // First, let's check if we can get any events at all
+        // First check if events table is accessible
         const { data: allEvents, error: allEventsError } = await supabase
           .from("events")
           .select("*")
           .limit(1);
 
-        console.log("🔍 All events test:", allEvents);
-        console.log("❌ All events error:", allEventsError);
-
         if (allEventsError) {
-          console.error("❌ Error fetching all events:", allEventsError);
+          console.error("Error accessing events table:", allEventsError);
           setError("Error accessing events. Please try again later.");
           return;
         }
 
-        // Now try to get our specific event using a different approach
+        // Fetch specific event details
         const { data, error } = await supabase
           .from("events")
           .select("*")
           .eq("id", eventId)
           .maybeSingle();
 
-        console.log("🔍 Query result:", { data, error });
-        console.log("🔍 Raw SQL equivalent:", `SELECT * FROM events WHERE id = '${eventId}'`);
-
         if (error) {
-          console.error("❌ Supabase error while fetching event:", error);
+          console.error("Error fetching event:", error);
           if (error.code === 'PGRST116') {
             setError("Event not found. Please check the event link and try again.");
           } else {
             setError("An error occurred while loading the event. Please try again later.");
           }
         } else if (!data) {
-          console.error("❌ No event data returned");
           setError("Event not found. Please check the event link and try again.");
         } else {
-          console.log("✅ Event found:", data);
           setEvent(data);
-          // Set plus_one to false if the event doesn't allow plus ones
+          // Reset plus_one if event doesn't allow it
           if (!data.allow_plus_one) {
-            setFormData(prev => ({ ...prev, plus_one: false }));
+            setNewRsvp(prev => ({ ...prev, plus_one: false }));
           }
           setError(null);
         }
       } catch (err) {
-        console.error("❌ Unexpected error:", err);
+        console.error("Unexpected error:", err);
         setError("An unexpected error occurred. Please try again later.");
       } finally {
         setLoading(false);
@@ -98,43 +105,91 @@ export default function EventPage() {
     fetchEvent();
   }, [eventId, router.isReady]);
 
+  /**
+   * Handles form input changes
+   * @param e - React change event
+   */
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const target = e.target as HTMLInputElement;
     const { name, value, type } = target;
 
-    setFormData((prev) => ({
+    setNewRsvp((prev) => ({
       ...prev,
       [name]: type === "checkbox" ? target.checked : value,
     }));
   };
 
+  /**
+   * Handles form submission
+   * Validates form and submits RSVP to database
+   * @param e - React form event
+   */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("📤 Submitting RSVP with data:", formData);
+    
+    if (newRsvp.response === "") {
+      alert("Please select whether you will be attending");
+      return;
+    }
 
-    const { error } = await supabase.from("rsvps").insert([
-      {
-        ...formData,
-        event_id: eventId,
-      },
-    ]);
+    try {
+      const { error } = await supabase.from("rsvps").insert([
+        {
+          ...newRsvp,
+          event_id: eventId,
+        },
+      ]);
 
-    if (error) {
-      alert("Error submitting RSVP. Try again.");
-      console.error("❌ RSVP submission error:", error);
-    } else {
-      router.push(`/thank-you?response=${formData.response}`);
+      if (error) {
+        alert("Error submitting RSVP. Please try again.");
+        console.error("RSVP submission error:", error);
+      } else {
+        router.push(`/thank-you?response=${newRsvp.response}`);
+      }
+    } catch (err) {
+      console.error("Unexpected error during RSVP submission:", err);
+      alert("An unexpected error occurred. Please try again.");
     }
   };
 
-  if (loading) return <div className="loading">Loading event...</div>;
-  if (error) return <div className="error">{error}</div>;
-  if (!event) return <div className="error">Event not found.</div>;
+  // Loading state
+  if (loading) {
+    return (
+      <div style={styles.loadingContainer}>
+        <div style={styles.loader} />
+        <span>Loading event details...</span>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div style={styles.errorContainer}>
+        <h2 style={styles.errorTitle}>Error</h2>
+        <p style={styles.errorMessage}>{error}</p>
+      </div>
+    );
+  }
+
+  // No event found state
+  if (!event) {
+    return (
+      <div style={styles.errorContainer}>
+        <h2 style={styles.errorTitle}>Event Not Found</h2>
+        <p style={styles.errorMessage}>The requested event could not be found.</p>
+      </div>
+    );
+  }
 
   return (
     <div style={styles.container}>
+      {/* Background with decorative pattern */}
       <div style={styles.background} />
+      
+      {/* Main content container */}
       <div style={styles.content}>
+        {/* Event Information Section */}
         <div style={styles.eventInfo}>
           <div style={styles.eventInfoTopRight} />
           <div style={styles.eventInfoBottomLeft} />
@@ -155,75 +210,135 @@ export default function EventPage() {
           </div>
         </div>
 
+        {/* RSVP Form Section */}
         <div style={styles.formContainer}>
           <div style={styles.formTopLeft} />
           <div style={styles.formTopRight} />
           <h2 style={styles.formTitle}>RSVP</h2>
           <form onSubmit={handleSubmit} style={styles.form}>
+            {/* Name Input */}
             <div style={styles.formGroup}>
               <label style={styles.label}>Name</label>
               <input
                 type="text"
                 name="name"
-                value={formData.name}
+                value={newRsvp.name}
                 onChange={handleChange}
                 required
                 style={styles.input}
               />
             </div>
 
+            {/* Email Input */}
             <div style={styles.formGroup}>
               <label style={styles.label}>Email</label>
               <input
                 type="email"
                 name="email"
-                value={formData.email}
+                value={newRsvp.email}
                 onChange={handleChange}
                 required
                 style={styles.input}
               />
             </div>
 
+            {/* Attendance Selection */}
             <div style={styles.formGroup}>
-              <label style={styles.label}>Response</label>
+              <label style={styles.label}>Will you be attending?</label>
               <select
                 name="response"
-                value={formData.response}
-                onChange={handleChange}
+                value={newRsvp.response}
+                onChange={(e) => {
+                  const newResponse = e.target.value;
+                  setNewRsvp(prev => ({
+                    ...prev,
+                    response: newResponse,
+                    plus_one: newResponse === 'no' ? false : prev.plus_one
+                  }));
+                }}
                 style={styles.select}
+                required
               >
-                <option value="yes">I'll be there!</option>
-                <option value="no">Sorry, can't make it</option>
-                <option value="maybe">Maybe</option>
+                <option value="">Please select an option</option>
+                <option value="yes">Yes, I'll be there</option>
+                <option value="no">No, I won't be able to make it</option>
               </select>
             </div>
 
-            {event.allow_plus_one && (
+            {/* Plus One Toggle (only shown if event allows plus ones and user is attending) */}
+            {event?.allow_plus_one && newRsvp.response === 'yes' && (
               <div style={styles.formGroup}>
-                <label style={styles.checkboxLabel}>
-                  <input
-                    type="checkbox"
-                    name="plus_one"
-                    checked={formData.plus_one}
-                    onChange={handleChange}
-                    style={styles.checkbox}
-                  />
-                  I'll bring a plus one
-                </label>
+                <label style={styles.label}>Will you be bringing a plus one?</label>
+                <div style={styles.toggleContainer}>
+                  <button
+                    type="button"
+                    onClick={() => setNewRsvp(prev => ({ ...prev, plus_one: true }))}
+                    style={{
+                      ...styles.toggleButton,
+                      ...(newRsvp.plus_one ? styles.toggleButtonActive : {})
+                    }}
+                  >
+                    Yes
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setNewRsvp(prev => ({ ...prev, plus_one: false }))}
+                    style={{
+                      ...styles.toggleButton,
+                      ...(!newRsvp.plus_one ? styles.toggleButtonActive : {})
+                    }}
+                  >
+                    No
+                  </button>
+                </div>
               </div>
             )}
 
+            {/* Plus One Toggle (disabled state when not attending) */}
+            {event?.allow_plus_one && newRsvp.response === 'no' && (
+              <div style={styles.formGroup}>
+                <label style={styles.label}>Will you be bringing a plus one?</label>
+                <div style={styles.toggleContainer}>
+                  <button
+                    type="button"
+                    disabled
+                    style={{
+                      ...styles.toggleButton,
+                      ...styles.toggleButtonDisabled
+                    }}
+                  >
+                    Yes
+                  </button>
+                  <button
+                    type="button"
+                    disabled
+                    style={{
+                      ...styles.toggleButton,
+                      ...styles.toggleButtonDisabled
+                    }}
+                  >
+                    No
+                  </button>
+                </div>
+                <p style={styles.disabledMessage}>
+                  Plus one option is not available when not attending
+                </p>
+              </div>
+            )}
+
+            {/* Dietary Preferences */}
             <div style={styles.formGroup}>
               <label style={styles.label}>Dietary Preferences</label>
               <textarea
                 name="dietary_preferences"
-                value={formData.dietary_preferences}
+                value={newRsvp.dietary_preferences}
                 onChange={handleChange}
                 placeholder="Any dietary restrictions or preferences?"
                 style={styles.textarea}
               />
             </div>
 
+            {/* Submit Button */}
             <button type="submit" style={styles.submitButton}>
               Submit RSVP
             </button>
@@ -234,7 +349,12 @@ export default function EventPage() {
   );
 }
 
+/**
+ * Component Styles
+ * Organized by component sections for better maintainability
+ */
 const styles = {
+  // Layout
   container: {
     display: 'flex',
     flexDirection: 'column' as const,
@@ -244,10 +364,9 @@ const styles = {
     padding: '1rem',
     position: 'relative' as const,
     zIndex: 1,
-    '@media (min-width: 640px)': {
-      padding: '2rem',
-    },
   },
+
+  // Background
   background: {
     position: 'absolute' as const,
     top: 0,
@@ -256,33 +375,26 @@ const styles = {
     bottom: 0,
     background: '#faf6f2',
     zIndex: 1,
-    '::before': {
-      content: '""',
-      position: 'absolute' as const,
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      background: 'url("data:image/svg+xml,%3Csvg width=\'100\' height=\'100\' viewBox=\'0 0 100 100\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M50 0c-5.5 0-10 4.5-10 10s4.5 10 10 10 10-4.5 10-10-4.5-10-10-10zm0 80c-5.5 0-10 4.5-10 10s4.5 10 10 10 10-4.5 10-10-4.5-10-10-10zM10 50c0-5.5 4.5-10 10-10s10 4.5 10 10-4.5 10-10 10-10-4.5-10-10zm60 0c0-5.5 4.5-10 10-10s10 4.5 10 10-4.5 10-10 10-10-4.5-10-10z\' fill=\'%23e8e0d7\' fill-opacity=\'0.3\'/%3E%3C/svg%3E")',
-      opacity: 0.2,
-    },
   },
+
+  // Content
   content: {
     position: 'relative' as const,
     zIndex: 2,
-    maxWidth: '1000px',
+    maxWidth: '1200px',
     width: '100%',
     margin: '0 auto',
     padding: '1rem',
     display: 'grid',
     gridTemplateColumns: '1fr',
-    gap: '1.5rem',
+    gap: '2rem',
     '@media (min-width: 768px)': {
       gridTemplateColumns: '1fr 1fr',
-      gap: '2rem',
       padding: '2rem',
     },
   },
+
+  // Event Information
   eventInfo: {
     background: 'rgba(255, 255, 255, 0.7)',
     backdropFilter: 'blur(10px)',
@@ -293,40 +405,6 @@ const styles = {
     border: '1px solid rgba(232, 224, 215, 0.5)',
     position: 'relative' as const,
     overflow: 'hidden' as const,
-    width: '100%',
-    '@media (min-width: 768px)': {
-      padding: '2rem',
-    },
-    '::before': {
-      content: '""',
-      position: 'absolute' as const,
-      bottom: '0',
-      right: '-15px',
-      width: '100px',
-      height: '100px',
-      background: 'url("/images/floral_image.png") center/contain no-repeat',
-      opacity: 0.5,
-      transform: 'rotate(0deg)',
-      '@media (min-width: 768px)': {
-        width: '150px',
-        height: '150px',
-      },
-    },
-    '::after': {
-      content: '""',
-      position: 'absolute' as const,
-      bottom: '0',
-      left: '-15px',
-      width: '100px',
-      height: '100px',
-      background: 'url("/images/floral_image.png") center/contain no-repeat',
-      opacity: 0.5,
-      transform: 'rotate(90deg)',
-      '@media (min-width: 768px)': {
-        width: '150px',
-        height: '150px',
-      },
-    },
   },
   eventInfoTopRight: {
     position: 'absolute' as const,
@@ -337,10 +415,6 @@ const styles = {
     background: 'url("/images/floral_image.png") center/contain no-repeat',
     opacity: 0.5,
     transform: 'rotate(270deg)',
-    '@media (min-width: 768px)': {
-      width: '150px',
-      height: '150px',
-    },
   },
   eventInfoBottomLeft: {
     position: 'absolute' as const,
@@ -351,11 +425,42 @@ const styles = {
     background: 'url("/images/floral_image.png") center/contain no-repeat',
     opacity: 0.5,
     transform: 'rotate(90deg)',
-    '@media (min-width: 768px)': {
-      width: '150px',
-      height: '150px',
-    },
   },
+
+  // Form Elements
+  formContainer: {
+    background: 'rgba(255, 255, 255, 0.7)',
+    backdropFilter: 'blur(10px)',
+    WebkitBackdropFilter: 'blur(10px)',
+    padding: '1.5rem',
+    borderRadius: '16px',
+    boxShadow: '0 8px 24px rgba(0, 0, 0, 0.05)',
+    border: '1px solid rgba(232, 224, 215, 0.5)',
+    position: 'relative' as const,
+    overflow: 'hidden' as const,
+  },
+  formTopLeft: {
+    position: 'absolute' as const,
+    top: '5px',
+    left: '-10px',
+    width: '100px',
+    height: '100px',
+    background: 'url("/images/floral_image.png") center/contain no-repeat',
+    opacity: 0.5,
+    transform: 'rotate(180deg)',
+  },
+  formTopRight: {
+    position: 'absolute' as const,
+    top: '5px',
+    right: '-10px',
+    width: '100px',
+    height: '100px',
+    background: 'url("/images/floral_image.png") center/contain no-repeat',
+    opacity: 0.5,
+    transform: 'rotate(0deg)',
+  },
+
+  // Typography
   title: {
     color: '#2c1810',
     fontSize: '1.5rem',
@@ -370,263 +475,187 @@ const styles = {
       marginBottom: '2rem',
     },
   },
-  details: {
-    display: 'flex',
-    flexDirection: 'column' as const,
-    gap: '1rem',
-    '@media (min-width: 768px)': {
-      gap: '1.25rem',
-    },
-  },
-  detailItem: {
-    color: '#4a3c35',
-    fontSize: '0.9rem',
-    lineHeight: '1.5',
-    display: 'flex',
-    flexDirection: 'column' as const,
-    gap: '0.25rem',
-    opacity: 0,
-    animation: 'fadeIn 0.5s ease forwards',
-    '@media (min-width: 768px)': {
-      fontSize: '1rem',
-    },
-  },
-  detailLabel: {
-    fontWeight: '600',
-    color: '#2c1810',
-    fontSize: '0.8rem',
-    textTransform: 'uppercase' as const,
-    letterSpacing: '0.05em',
-    '@media (min-width: 768px)': {
-      fontSize: '0.85rem',
-    },
-  },
-  formContainer: {
-    background: 'rgba(255, 255, 255, 0.7)',
-    backdropFilter: 'blur(10px)',
-    WebkitBackdropFilter: 'blur(10px)',
-    padding: '1.5rem',
-    borderRadius: '16px',
-    boxShadow: '0 8px 24px rgba(0, 0, 0, 0.05)',
-    border: '1px solid rgba(232, 224, 215, 0.5)',
-    position: 'relative' as const,
-    overflow: 'hidden' as const,
-    width: '100%',
-    '@media (min-width: 768px)': {
-      padding: '2rem',
-    },
-    '::before': {
-      content: '""',
-      position: 'absolute' as const,
-      bottom: '0',
-      right: '-15px',
-      width: '100px',
-      height: '100px',
-      background: 'url("/images/floral_image.png") center/contain no-repeat',
-      opacity: 0.5,
-      transform: 'rotate(0deg)',
-      '@media (min-width: 768px)': {
-        width: '150px',
-        height: '150px',
-      },
-    },
-    '::after': {
-      content: '""',
-      position: 'absolute' as const,
-      bottom: '0',
-      left: '-15px',
-      width: '100px',
-      height: '100px',
-      background: 'url("/images/floral_image.png") center/contain no-repeat',
-      opacity: 0.5,
-      transform: 'rotate(270deg)',
-      '@media (min-width: 768px)': {
-        width: '150px',
-        height: '150px',
-      },
-    },
-  },
-  formTopLeft: {
-    position: 'absolute' as const,
-    bottom: '5px',
-    left: '-15px',
-    width: '150px',
-    height: '150px',
-    background: 'url("/images/floral_image.png") center/contain no-repeat',
-    opacity: 0.5,
-    transform: 'rotate(90deg)',
-  },
-  formTopRight: {
-    position: 'absolute' as const,
-    top: '5px',
-    right: '-10px',
-    width: '150px',
-    height: '150px',
-    background: 'url("/images/floral_image.png") center/contain no-repeat',
-    opacity: 0.5,
-    transform: 'rotate(270deg)',
-  },
   formTitle: {
     color: '#2c1810',
     fontSize: '1.25rem',
     marginBottom: '1.5rem',
     fontWeight: '600',
+    lineHeight: '1.2',
     letterSpacing: '-0.02em',
     position: 'relative' as const,
-    '@media (min-width: 768px)': {
-      fontSize: '2rem',
-      marginBottom: '2rem',
-    },
+    zIndex: 1,
   },
+  details: {
+    position: 'relative' as const,
+    zIndex: 1,
+  },
+  detailItem: {
+    marginBottom: '1rem',
+    color: '#4a3c35',
+    fontSize: '0.9rem',
+    lineHeight: '1.5',
+  },
+  detailLabel: {
+    fontWeight: '600',
+    marginRight: '0.5rem',
+  },
+
+  // Form Elements
   form: {
     display: 'flex',
     flexDirection: 'column' as const,
-    gap: '1rem',
-    '@media (min-width: 768px)': {
-      gap: '1.5rem',
-    },
+    gap: '1.5rem',
+    position: 'relative' as const,
+    zIndex: 1,
   },
   formGroup: {
     display: 'flex',
     flexDirection: 'column' as const,
     gap: '0.5rem',
-    opacity: 0,
-    animation: 'fadeIn 0.5s ease forwards',
   },
   label: {
-    color: '#4a3c35',
-    fontSize: '0.85rem',
+    color: '#2c1810',
+    fontSize: '0.9rem',
     fontWeight: '500',
-    letterSpacing: '0.02em',
-    transition: 'color 0.3s ease',
-    '@media (min-width: 768px)': {
-      fontSize: '0.9rem',
-    },
   },
   input: {
     padding: '0.75rem 1rem',
-    borderRadius: '10px',
-    border: '1px solid rgba(44, 24, 16, 0.1)',
+    borderRadius: '8px',
+    border: '1px solid #A1AEB1',
     fontSize: '0.9rem',
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
     transition: 'all 0.3s ease',
-    color: '#2c1810',
-    width: '100%',
-    '@media (min-width: 768px)': {
-      fontSize: '0.95rem',
-      padding: '0.875rem 1.25rem',
+    backgroundColor: '#FBFCFC',
+    color: '#000506',
+    outline: 'none',
+    '&:focus': {
+      borderColor: '#315358',
+      boxShadow: '0 0 0 2px rgba(49, 83, 88, 0.1)',
     },
   },
   select: {
-    padding: '0.875rem 1.25rem',
-    borderRadius: '10px',
-    border: '1px solid rgba(44, 24, 16, 0.1)',
-    fontSize: '0.95rem',
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-    cursor: 'pointer',
+    padding: '0.75rem 1rem',
+    borderRadius: '8px',
+    border: '1px solid #A1AEB1',
+    fontSize: '0.9rem',
     transition: 'all 0.3s ease',
-    color: '#2c1810',
-    ':focus': {
-      outline: 'none',
-      borderColor: '#c7a17a',
-      boxShadow: '0 0 0 3px rgba(199, 161, 122, 0.1)',
-      backgroundColor: 'white',
-      transform: 'translateY(-1px)',
+    backgroundColor: '#FBFCFC',
+    color: '#000506',
+    outline: 'none',
+    cursor: 'pointer',
+    '&:focus': {
+      borderColor: '#315358',
+      boxShadow: '0 0 0 2px rgba(49, 83, 88, 0.1)',
     },
   },
   textarea: {
     padding: '0.75rem 1rem',
-    borderRadius: '10px',
-    border: '1px solid rgba(44, 24, 16, 0.1)',
+    borderRadius: '8px',
+    border: '1px solid #A1AEB1',
     fontSize: '0.9rem',
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    transition: 'all 0.3s ease',
+    backgroundColor: '#FBFCFC',
+    color: '#000506',
+    outline: 'none',
     minHeight: '100px',
     resize: 'vertical' as const,
-    transition: 'all 0.3s ease',
-    color: '#2c1810',
-    width: '100%',
-    '@media (min-width: 768px)': {
-      fontSize: '0.95rem',
-      padding: '0.875rem 1.25rem',
+    '&:focus': {
+      borderColor: '#315358',
+      boxShadow: '0 0 0 2px rgba(49, 83, 88, 0.1)',
     },
   },
-  checkboxLabel: {
+
+  // Toggle Buttons
+  toggleContainer: {
     display: 'flex',
-    alignItems: 'center',
-    gap: '0.75rem',
+    gap: '0.5rem',
+  },
+  toggleButton: {
+    flex: 1,
+    padding: '0.75rem 1rem',
+    borderRadius: '8px',
+    border: '1px solid #A1AEB1',
+    background: 'none',
     color: '#4a3c35',
     fontSize: '0.9rem',
     cursor: 'pointer',
-    userSelect: 'none' as const,
-    transition: 'color 0.3s ease',
-    ':hover': {
-      color: '#2c1810',
+    transition: 'all 0.3s ease',
+    '&:hover': {
+      background: '#F3E8FF',
     },
   },
-  checkbox: {
-    width: '1.1rem',
-    height: '1.1rem',
-    cursor: 'pointer',
-    accentColor: '#c7a17a',
-    transition: 'transform 0.2s ease',
-    ':hover': {
-      transform: 'scale(1.1)',
+  toggleButtonActive: {
+    background: '#764ba2',
+    color: '#ffffff',
+    borderColor: '#764ba2',
+    '&:hover': {
+      background: '#5f3a8a',
     },
   },
+  toggleButtonDisabled: {
+    opacity: 0.5,
+    cursor: 'not-allowed',
+    '&:hover': {
+      background: 'none',
+    },
+  },
+  disabledMessage: {
+    color: '#64748B',
+    fontSize: '0.8rem',
+    marginTop: '0.5rem',
+  },
+
+  // Submit Button
   submitButton: {
-    padding: '0.75rem 1.5rem',
-    borderRadius: '10px',
-    background: 'linear-gradient(135deg, #c7a17a 0%, #b08d6d 100%)',
-    color: 'white',
+    padding: '1rem 1.5rem',
+    borderRadius: '8px',
+    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    color: '#FBFCFC',
     border: 'none',
-    fontSize: '0.9rem',
+    fontSize: '1rem',
     fontWeight: '600',
     cursor: 'pointer',
     transition: 'all 0.3s ease',
-    letterSpacing: '0.02em',
-    textTransform: 'uppercase' as const,
-    width: '100%',
-    '@media (min-width: 768px)': {
-      fontSize: '1rem',
-      padding: '1rem 2rem',
-      width: 'auto',
+    marginTop: '1rem',
+    '&:hover': {
+      transform: 'translateY(-2px)',
     },
   },
-  loading: {
+
+  // Loading and Error States
+  loadingContainer: {
     display: 'flex',
-    justifyContent: 'center',
+    flexDirection: 'column' as const,
     alignItems: 'center',
+    justifyContent: 'center',
     minHeight: '100vh',
-    fontSize: '1.1rem',
-    color: '#4a3c35',
+    gap: '1rem',
   },
-  error: {
+  loader: {
+    width: '40px',
+    height: '40px',
+    border: '4px solid rgba(118, 75, 162, 0.3)',
+    borderTop: '4px solid #764ba2',
+    borderRadius: '50%',
+    animation: 'spin 1s linear infinite',
+  },
+  errorContainer: {
     display: 'flex',
-    justifyContent: 'center',
+    flexDirection: 'column' as const,
     alignItems: 'center',
+    justifyContent: 'center',
     minHeight: '100vh',
-    fontSize: '1.1rem',
-    color: '#c7a17a',
+    padding: '2rem',
+    textAlign: 'center' as const,
+  },
+  errorTitle: {
+    color: '#2c1810',
+    fontSize: '1.5rem',
+    marginBottom: '1rem',
+    fontWeight: '600',
+  },
+  errorMessage: {
+    color: '#4a3c35',
+    fontSize: '1rem',
+    lineHeight: '1.5',
   },
 };
-
-// Add keyframes for animations
-const keyframes = `
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-`;
-
-// Add the keyframes to the document
-if (typeof document !== 'undefined') {
-  const style = document.createElement('style');
-  style.textContent = keyframes;
-  document.head.appendChild(style);
-}

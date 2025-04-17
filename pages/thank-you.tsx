@@ -1,29 +1,63 @@
-import Link from "next/link";
+/**
+ * Thank You Page Component
+ * 
+ * This page displays a confirmation message after a user submits their RSVP.
+ * Features:
+ * - Dynamic content based on RSVP response (attending/not attending)
+ * - Responsive design with decorative elements
+ * - Clean and elegant UI with subtle animations
+ */
+
 import { useRouter } from "next/router";
 
+// Type definitions for better type safety
+interface ThankYouPageProps {
+  response?: string;
+}
+
 export default function ThankYouPage() {
+  // Router instance for navigation and query parameters
   const router = useRouter();
-  const { response } = router.query;
+  const { response } = router.query as ThankYouPageProps;
+  
+  // Determine if user is attending based on response
   const isAttending = response === "yes";
 
   return (
     <div style={styles.container}>
+      {/* Background with decorative pattern */}
       <div style={styles.background} />
+      
+      {/* Main content container */}
       <div style={styles.content}>
+        {/* Thank you card with decorative elements */}
         <div style={styles.card}>
+          {/* Decorative elements */}
           <div style={styles.cardTopRight} />
           <div style={styles.cardBottomLeft} />
+          
+          {/* Dynamic content based on RSVP response */}
           {isAttending ? (
+            // Content for attending guests
             <>
               <h1 style={styles.title}>🎉 Thank you for your RSVP!</h1>
-              <p style={styles.message}>We're excited to see you at the event. A confirmation has been recorded.</p>
-              <p style={styles.message}>If you have any questions, feel free to reach out.</p>
+              <p style={styles.message}>
+                We're excited to see you at the event. A confirmation has been recorded.
+              </p>
+              <p style={styles.message}>
+                If you have any questions, feel free to reach out.
+              </p>
             </>
           ) : (
+            // Content for non-attending guests
             <>
               <h1 style={styles.title}>Thank you for letting us know</h1>
-              <p style={styles.message}>We're sorry you can't make it, but we appreciate your response.</p>
-              <p style={styles.message}>If anything changes, feel free to RSVP again or contact us directly.</p>
+              <p style={styles.message}>
+                We're sorry you can't make it, but we appreciate your response.
+              </p>
+              <p style={styles.message}>
+                If anything changes, feel free to RSVP again or contact us directly.
+              </p>
             </>
           )}
         </div>
@@ -32,7 +66,12 @@ export default function ThankYouPage() {
   );
 }
 
+/**
+ * Component Styles
+ * Organized by component sections for better maintainability
+ */
 const styles = {
+  // Layout
   container: {
     display: 'flex',
     flexDirection: 'column' as const,
@@ -46,6 +85,8 @@ const styles = {
       padding: '2rem',
     },
   },
+
+  // Background
   background: {
     position: 'absolute' as const,
     top: 0,
@@ -65,6 +106,8 @@ const styles = {
       opacity: 0.2,
     },
   },
+
+  // Content
   content: {
     position: 'relative' as const,
     zIndex: 2,
@@ -76,6 +119,8 @@ const styles = {
       padding: '2rem',
     },
   },
+
+  // Card
   card: {
     background: 'rgba(255, 255, 255, 0.7)',
     backdropFilter: 'blur(10px)',
@@ -92,6 +137,8 @@ const styles = {
       padding: '2rem',
     },
   },
+
+  // Decorative Elements
   cardTopRight: {
     position: 'absolute' as const,
     top: '5px',
@@ -120,6 +167,8 @@ const styles = {
       height: '150px',
     },
   },
+
+  // Typography
   title: {
     color: '#2c1810',
     fontSize: '1.5rem',
