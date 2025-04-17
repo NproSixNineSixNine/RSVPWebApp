@@ -18,11 +18,15 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
     };
-    
+
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
+
+  useEffect(() => {
+    document.body.style.overflow = isNavOpen && isMobile ? 'hidden' : 'auto';
+  }, [isNavOpen, isMobile]);
 
   const toggleSidebar = () => {
     setIsCollapsed(!isCollapsed);
@@ -46,25 +50,29 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     return router.pathname === path;
   };
 
+  const handleLinkClick = () => {
+    if (isMobile) setIsNavOpen(false);
+  };
+
   return (
     <div style={styles.wrapper}>
-      {/* Mobile Menu Button */}
       {isMobile && (
-        <button 
-          style={styles.menuButton}
-          onClick={toggleMobileNav}
-        >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M3 12H21M3 6H21M3 18H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        <button style={styles.menuButton} onClick={toggleMobileNav}>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path d="M3 12H21M3 6H21M3 18H21" stroke="currentColor" strokeWidth="2" />
           </svg>
         </button>
+      )}
+
+      {isMobile && isNavOpen && (
+        <div style={styles.backdrop} onClick={toggleMobileNav} />
       )}
 
       <div style={{
         ...styles.sidebar,
         ...(isMobile ? styles.sidebarMobile : {}),
         ...(isCollapsed ? styles.sidebarCollapsed : {}),
-        ...(isMobile && isNavOpen ? { transform: 'translateX(0)' } : {}),
+        ...(isMobile && isNavOpen ? styles.sidebarOpen : {}),
       }}>
         <div style={styles.sidebarHeader}>
           <div style={styles.logoWrapper}>
@@ -77,32 +85,33 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           )}
         </div>
         <nav style={styles.nav}>
-          <Link href="/admin" style={{
+          <Link href="/admin" onClick={handleLinkClick} style={{
             ...styles.navLink,
             ...(isActive('/admin') ? styles.activeNavLink : {}),
           }}>
-            <span style={styles.navIcon}>📅</span>
+            <Image src="/images/calendar.png" alt="Events" width={24} height={24} style={styles.navIcon} />
             {!isCollapsed && <span>Events</span>}
           </Link>
-          <Link href="/admin/analytics" style={{
+          <Link href="/admin/analytics" onClick={handleLinkClick} style={{
             ...styles.navLink,
             ...(isActive('/admin/analytics') ? styles.activeNavLink : {}),
           }}>
-            <span style={styles.navIcon}>📊</span>
+            <Image src="/images/data-analytics.png" alt="Analytics" width={24} height={24} style={styles.navIcon} />
             {!isCollapsed && <span>Analytics</span>}
           </Link>
         </nav>
         <div style={styles.logoutContainer}>
           <button style={styles.logoutButton} onClick={handleLogout}>
-            <span style={styles.navIcon}>🚪</span>
+            <Image src="/images/logout.png" alt="Logout" width={24} height={24} style={styles.navIcon} />
             {!isCollapsed && <span>Logout</span>}
           </button>
         </div>
       </div>
+
       <main style={{
         ...styles.main,
         ...(isMobile ? styles.mainMobile : {}),
-        ...(isCollapsed ? styles.mainExpanded : {}),
+        ...(isCollapsed && !isMobile ? styles.mainExpanded : {}),
       }}>
         {children}
       </main>
@@ -114,27 +123,27 @@ const styles = {
   wrapper: {
     display: 'flex',
     minHeight: '100vh',
-    '@media (max-width: 768px)': {
-      flexDirection: 'column' as const,
-    },
+    position: 'relative' as const,
   },
   menuButton: {
     position: 'fixed' as const,
-    top: '12px',
-    left: '12px',
-    zIndex: 20,
-    background: 'none',
-    border: 'none',
-    color: '#1E293B',
+    top: '1rem',
+    left: '1rem',
+    zIndex: 1001,
+    background: 'white',
+    border: '1px solid #E2E8F0',
+    padding: '0.5rem',
+    borderRadius: '8px',
     cursor: 'pointer',
-    padding: '8px',
-    borderRadius: '4px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    '&:hover': {
-      background: 'rgba(0, 0, 0, 0.05)',
-    },
+  },
+  backdrop: {
+    position: 'fixed' as const,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    zIndex: 1000,
   },
   sidebar: {
     width: '220px',
@@ -143,30 +152,21 @@ const styles = {
     display: 'flex',
     flexDirection: 'column' as const,
     transition: 'all 0.3s ease',
-    '@media (max-width: 768px)': {
-      width: '50%',
-      position: 'fixed' as const,
-      top: 0,
-      left: 0,
-      bottom: 0,
-      transform: 'translateX(-100%)',
-      zIndex: 1000,
-    },
+    zIndex: 1001,
   },
   sidebarMobile: {
-    width: '50%',
     position: 'fixed' as const,
     top: 0,
-    left: 0,
     bottom: 0,
+    left: 0,
+    width: '70%',
     transform: 'translateX(-100%)',
-    zIndex: 1000,
+  },
+  sidebarOpen: {
+    transform: 'translateX(0)',
   },
   sidebarCollapsed: {
     width: '60px',
-    '@media (max-width: 768px)': {
-      width: '50%',
-    },
   },
   sidebarHeader: {
     display: 'flex',
@@ -176,31 +176,24 @@ const styles = {
   },
   logoWrapper: {
     display: 'flex',
-    alignItems: 'center',
     justifyContent: 'center',
-    width: '100%',
-  },
-  logo: {
-    borderRadius: '50%',
   },
   logoText: {
     color: 'white',
-    fontWeight: 'bold',
     fontSize: '1.2rem',
-    textAlign: 'center' as const,
+    fontWeight: 'bold',
   },
   collapseButton: {
     background: 'none',
     border: 'none',
     color: 'white',
     cursor: 'pointer',
-    fontSize: '1.2rem',
-    padding: '0.5rem',
+    fontSize: '1.25rem',
   },
   nav: {
     display: 'flex',
     flexDirection: 'column' as const,
-    gap: '0.5rem',
+    gap: '1rem',
     flex: 1,
   },
   navLink: {
@@ -212,15 +205,13 @@ const styles = {
     textDecoration: 'none',
     borderRadius: '8px',
     transition: 'all 0.2s ease',
-    '&:hover': {
-      background: 'rgba(255, 255, 255, 0.1)',
-    },
   },
   activeNavLink: {
     background: 'rgba(255, 255, 255, 0.2)',
   },
   navIcon: {
-    fontSize: '1.25rem',
+    width: '24px',
+    height: '24px',
   },
   logoutContainer: {
     marginTop: 'auto',
@@ -236,29 +227,18 @@ const styles = {
     cursor: 'pointer',
     width: '100%',
     borderRadius: '8px',
-    transition: 'all 0.2s ease',
-    '&:hover': {
-      background: 'rgba(255, 255, 255, 0.1)',
-    },
   },
   main: {
     flex: 1,
     padding: '2rem',
     background: '#f8fafc',
     transition: 'all 0.3s ease',
-    '@media (max-width: 768px)': {
-      padding: '1rem',
-      marginTop: '60px',
-    },
   },
   mainMobile: {
-    padding: '1rem',
     marginTop: '60px',
+    padding: '1rem',
   },
   mainExpanded: {
     marginLeft: '60px',
-    '@media (max-width: 768px)': {
-      marginLeft: 0,
-    },
   },
 } as const; 

@@ -199,51 +199,53 @@ export default function EventDetailsPage() {
               </div>
             )}
           </div>
-          <div style={styles.tableContainer}>
-            <table style={styles.table}>
-              <thead>
-                <tr>
-                  <th style={styles.th}>Guest Name</th>
-                  <th style={styles.th}>Email</th>
-                  <th style={styles.th}>Status</th>
-                  <th style={styles.th}>Plus One</th>
-                  <th style={styles.th}>Dietary</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rsvps.map((rsvp) => (
-                  <tr 
-                    key={rsvp.id} 
-                    style={styles.tr}
-                    onClick={() => isMobile && {/* Add mobile row click handler */}}
-                  >
-                    <td style={styles.td} data-label="Guest Name">{rsvp.name}</td>
-                    <td style={styles.td} data-label="Email">{rsvp.email}</td>
-                    <td style={styles.td} data-label="Status">
-                      <span style={{
-                        ...styles.statusBadge,
-                        ...(rsvp.response === 'yes' ? styles.statusYes : styles.statusNo)
-                      }}>
-                        {rsvp.response === 'yes' ? 'Attending' : 'Not Attending'}
-                      </span>
-                    </td>
-                    <td style={styles.td} data-label="Plus One">
-                      {rsvp.response === 'yes' ? (rsvp.plus_one ? 'Yes' : 'No') : '-'}
-                    </td>
-                    <td style={styles.td} data-label="Dietary">
-                      {rsvp.dietary_preferences || 'None'}
-                    </td>
-                  </tr>
-                ))}
-                {rsvps.length === 0 && (
+          <div style={styles.tableWrapper}>
+            <div style={styles.tableContainer}>
+              <table style={styles.table}>
+                <thead>
                   <tr>
-                    <td colSpan={5} style={styles.noRsvps}>
-                      No RSVPs yet for this event
-                    </td>
+                    <th style={styles.th}>Guest Name</th>
+                    <th style={styles.th}>Email</th>
+                    <th style={styles.th}>Status</th>
+                    <th style={styles.th}>Plus One</th>
+                    <th style={styles.th}>Dietary</th>
                   </tr>
-                )}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {rsvps.map((rsvp) => (
+                    <tr 
+                      key={rsvp.id} 
+                      style={styles.tr}
+                      onClick={() => isMobile && {/* Add mobile row click handler */}}
+                    >
+                      <td style={styles.td} data-label="Guest Name">{rsvp.name}</td>
+                      <td style={styles.td} data-label="Email">{rsvp.email}</td>
+                      <td style={styles.td} data-label="Status">
+                        <span style={{
+                          ...styles.statusBadge,
+                          ...(rsvp.response === 'yes' ? styles.statusYes : styles.statusNo)
+                        }}>
+                          {rsvp.response === 'yes' ? 'Attending' : 'Not Attending'}
+                        </span>
+                      </td>
+                      <td style={styles.td} data-label="Plus One">
+                        {rsvp.response === 'yes' ? (rsvp.plus_one ? 'Yes' : 'No') : '-'}
+                      </td>
+                      <td style={styles.td} data-label="Dietary">
+                        {rsvp.dietary_preferences || 'None'}
+                      </td>
+                    </tr>
+                  ))}
+                  {rsvps.length === 0 && (
+                    <tr>
+                      <td colSpan={5} style={styles.noRsvps}>
+                        No RSVPs yet for this event
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
@@ -371,10 +373,27 @@ const styles = {
     alignItems: 'center',
     marginBottom: '1rem',
   },
-  tableContainer: {
+  tableWrapper: {
+    width: '100%',
     overflowX: 'auto' as const,
-    marginTop: '1rem',
     WebkitOverflowScrolling: 'touch' as const,
+    marginBottom: '1.5rem',
+    borderRadius: '8px',
+    border: '1px solid #E2E8F0',
+    '@media (max-width: 640px)': {
+      margin: '0 -1rem',
+      width: 'calc(100% + 2rem)',
+      borderRadius: '0',
+      borderLeft: 'none',
+      borderRight: 'none',
+    },
+  },
+  tableContainer: {
+    minWidth: '800px',
+    '@media (max-width: 640px)': {
+      minWidth: '100%',
+      width: '100%',
+    },
   },
   table: {
     width: '100%',
@@ -386,6 +405,7 @@ const styles = {
   th: {
     padding: '0.75rem',
     textAlign: 'left' as const,
+    background: '#F8FAFC',
     color: '#64748B',
     fontSize: '0.85rem',
     fontWeight: '600',
@@ -563,4 +583,4 @@ const styles = {
     cursor: 'pointer',
     flex: 1,
   },
-}; 
+} as const; 

@@ -461,6 +461,26 @@ const AdminPage = () => {
                 >
                   {sortOrder === 'asc' ? '↑' : '↓'}
                 </button>
+                <button
+                  style={styles.refreshButton}
+                  onClick={async () => {
+                    setLoading(true);
+                    try {
+                      await fetchEvents();
+                    } catch (error) {
+                      console.error('Error refreshing events:', error);
+                    } finally {
+                      setLoading(false);
+                    }
+                  }}
+                  title="Refresh events"
+                >
+                  <img 
+                    src="/images/refresh.png" 
+                    alt="Refresh" 
+                    style={styles.refreshIcon}
+                  />
+                </button>
               </div>
             </div>
           </div>
@@ -853,6 +873,28 @@ const styles = {
       background: '#E2E8F0',
     },
   },
+  refreshButton: {
+    padding: '0.5rem',
+    background: '#F1F5F9',
+    border: '1px solid #E2E8F0',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    '&:hover': {
+      background: '#E2E8F0',
+    },
+    '&:active': {
+      transform: 'scale(0.98)',
+    },
+  },
+  refreshIcon: {
+    width: '16px',
+    height: '16px',
+    objectFit: 'contain',
+  },
 
   // Table
   tableWrapper: {
@@ -1144,6 +1186,6 @@ const styles = {
     color: '#64748B',
     fontSize: '0.9rem',
   },
-};
+} as const;
 
 export default AdminPage; 
