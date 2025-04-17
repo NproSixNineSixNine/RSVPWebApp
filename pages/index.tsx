@@ -117,7 +117,7 @@ export default function Login() {
         <div style={styles.card}>
           <div style={styles.loaderContainer}>
             <div style={styles.loader} />
-            <span>Checking session...</span>
+            <span>Initializing your secure session...</span>
           </div>
         </div>
       </div>
