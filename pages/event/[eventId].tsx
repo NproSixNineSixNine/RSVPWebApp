@@ -441,13 +441,13 @@ const styles = {
   },
   formTopLeft: {
     position: 'absolute' as const,
-    top: '5px',
-    left: '-10px',
+    bottom: '5px',
+    left: '-15px',
     width: '100px',
     height: '100px',
     background: 'url("/images/floral_image.png") center/contain no-repeat',
     opacity: 0.5,
-    transform: 'rotate(180deg)',
+    transform: 'rotate(90deg)',
   },
   formTopRight: {
     position: 'absolute' as const,
@@ -457,7 +457,7 @@ const styles = {
     height: '100px',
     background: 'url("/images/floral_image.png") center/contain no-repeat',
     opacity: 0.5,
-    transform: 'rotate(0deg)',
+    transform: 'rotate(270deg)',
   },
 
   // Typography
@@ -580,15 +580,15 @@ const styles = {
     cursor: 'pointer',
     transition: 'all 0.3s ease',
     '&:hover': {
-      background: '#F3E8FF',
+      background: 'rgba(212, 163, 115, 0.1)',
     },
   },
   toggleButtonActive: {
-    background: '#764ba2',
+    background: '#D4A373',
     color: '#ffffff',
-    borderColor: '#764ba2',
+    borderColor: '#D4A373',
     '&:hover': {
-      background: '#5f3a8a',
+      background: '#E6B17E',
     },
   },
   toggleButtonDisabled: {
@@ -608,8 +608,8 @@ const styles = {
   submitButton: {
     padding: '1rem 1.5rem',
     borderRadius: '8px',
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    color: '#FBFCFC',
+    background: '#D4A373',
+    color: '#ffffff',
     border: 'none',
     fontSize: '1rem',
     fontWeight: '600',
@@ -618,6 +618,7 @@ const styles = {
     marginTop: '1rem',
     '&:hover': {
       transform: 'translateY(-2px)',
+      background: '#E6B17E',
     },
   },
 
